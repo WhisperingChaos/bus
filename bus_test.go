@@ -2,6 +2,7 @@ package bus
 
 import (
 	"fmt"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,20 +58,10 @@ func receive(r <-chan interface{}) (msgCnt int) {
 	return msgCnt
 }
 
-func ExampleB() {
-	var b B
+type discard struct{}
 
-	senderCommand(&b, cmmdX{}, 10)
-	senderCommand(&b, cmmdY{}, 10)
-	select {
-	case <-b.ShutdownMonitor():
-		panic("shutdown monitor should block")
-	default:
-	}
-	quit := receiverCommands(&b)
-	<-b.ShutdownMonitor()
-	<-quit
-}
+func (discard) Write([]byte) (int, error)       { return 0, nil }
+func (discard) WriteString(string) (int, error) { return 0, nil }
 
 func Benchmark_Example(b *testing.B) {
 	const msgMult = 100
@@ -92,7 +83,7 @@ func Benchmark_Example(b *testing.B) {
 			panic("shutdown monitor should block")
 		default:
 		}
-		quit := receiverCommands(&b)
+		quit := receiverCommands(&b, discard{})
 		<-b.ShutdownMonitor()
 		<-quit
 	}
@@ -106,8 +97,8 @@ type cmmdY struct {
 
 func senderCommand(b *B, msg interface{}, msgRepl int) {
 	// this routine cannot be called as a goroutine as it
-	// encourages Happens Before by immediately allocating
-	// a send connection then launching a goroutine.
+	// enforces a "Happens Before" constraint by immediately
+	// allocating a sending connection before launching a goroutine.
 	c, df, active := b.SenderConnect()
 	if !active {
 		panic("Bus should be active")
@@ -119,20 +110,26 @@ func senderCommand(b *B, msg interface{}, msgRepl int) {
 		}
 	}()
 }
-func receiverCommands(b *B) <-chan struct{} {
+func receiverCommands(b *B, w io.Writer) <-chan struct{} {
 	quit := make(chan struct{})
+	m := b.ReceiverConnect()
 	go func() {
 		defer close(quit)
-		m := b.ReceiverConnect()
+		ycnt := 0
+		xcnt := 0
 		for msg := range m {
 			switch msg.(type) {
 			case cmmdY:
+				ycnt++
 			case cmmdX:
+				xcnt++
 			default:
 				panic("received unexpected command")
 
 			}
 		}
+		io.WriteString(w, fmt.Sprintf("ycnt=%d\n", ycnt))
+		io.WriteString(w, fmt.Sprintf("xcnt=%d\n", xcnt))
 	}()
 	return quit
 }
