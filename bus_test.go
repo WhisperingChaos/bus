@@ -23,21 +23,22 @@ func Test(t *testing.T) {
 func Test_BusAlreadyTerminated(t *testing.T) {
 	assrt := assert.New(t)
 	var b B
+
 	// bus started
 	assrt.True(sendN(1, &b))
 	assrt.Equal(1, receive(b.ReceiverConnect()))
-	// bus terminated
-	// sender connect after termination
+	// bus shutdown
+	// Sender connect attempt after termination
 	ch, disconnectFn, active := b.SenderConnect()
 	assrt.Nil(ch)
 	assrt.Nil(disconnectFn)
 	assrt.False(active)
-	//	receiver connect after termination
+	//	Receiver connect after bus termination
 	assrt.False(func() bool { _, ok := <-b.ReceiverConnect(); return ok }())
 }
 
-func sendN(inst int, ssc *B) bool {
-	bs, disconnect, active := ssc.SenderConnect()
+func sendN(inst int, b *B) bool {
+	bs, disconnect, active := b.SenderConnect()
 	if !active {
 		return false
 	}
@@ -56,8 +57,9 @@ func receive(r <-chan interface{}) (msgCnt int) {
 	return msgCnt
 }
 
-func Test_Example(t *testing.T) {
+func ExampleB() {
 	var b B
+
 	senderCommand(&b, cmmdX{}, 10)
 	senderCommand(&b, cmmdY{}, 10)
 	select {
