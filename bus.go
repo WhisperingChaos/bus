@@ -11,7 +11,9 @@ import (
 )
 
 /*
-B semantics
+B for Bus
+
+ Semantics
 
 - Senders generate Messages that are consumed by Receivers.  There isn't an address
 mechanism, therefore, Messages can't be directed to specific Receivers. Any available
@@ -49,7 +51,7 @@ notification.  However, Receivers can attach and access the shared channel even 
 a bus shutdown.  In this situation, the Receiver, when it attempts to access the
 channel, is notified that it's closed.
 
-Motivation
+ Motivation
 
 - Provides a minimal interface to expose a rudimentary abilility to share a
 single channel with little concern to its management.
