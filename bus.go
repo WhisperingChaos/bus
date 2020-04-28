@@ -1,5 +1,5 @@
 /*
-Package bus streams arbitrary Message types between Sender(s) and Receiver(s)
+Package bus streams arbitrary Message types from Sender(s) to Receiver(s)
 using a shared conduit - single reference counted channel.  Once the last
 Sender disconnects from the bus, the bus shuts down.  A bus shutdown
 closes the channel forcing the Receivers to abandon the bus.
@@ -33,7 +33,7 @@ instance (Sender needs a Receiver, Receiver needs a Sender) begins processing
 Messages.  Although Senders/Receivers can abitrarily connect to a bus, consideration
 should be applied to ensure that all intended Senders attach to the bus before it
 terminates.  For example, one could employ a mechanism, like a WaitGroup or channel
-to enforce a Happens Before (https://golang.org/ref/mem) relationship to guarantee
+to enforce a "Happens Before" (https://golang.org/ref/mem) relationship to guarantee
 that all Senders connect before connecting/starting any Receiver.
 
 - B is concurrency safe - a single instance can be shared among goroutines,
@@ -119,9 +119,10 @@ carefully craft the Receiver(s) and Sender(s) to avoid infinite message
 loops that may arise from flawed retry schemes.
 
 A Receiver does not offer a disconnect function as returned by SenderConnect.
-Unlike a Sender, the design doesn't confer ownership to a Receivers. This
+Unlike a Sender, the design doesn't confer ownership to a Receiver. This
 asymetry simplifies both the implementation and interface of this bus
-class and delivers semantics similar to a basic channel.
+class and delivers semantics very similar to a basic channel
+(https://github.com/golang/go/issues/21985).
 */
 func (b *B) ReceiverConnect() (receive <-chan interface{}) {
 	// Mutex not required here as "once" will block others
