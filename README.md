@@ -1,4 +1,4 @@
-![Go](https://github.com/WhisperingChaos/bus/workflows/Go/badge.svg)
+![Go](https://github.com/WhisperingChaos/bus/workflows/Go/badge.svg) [![GoDoc](https://godoc.org/github.com/WhisperingChaos/bus?status.svg)](https://godoc.org/github.com/WhisperingChaos/bus)
 # bus
 Golang Package bus streams arbitrary Messages from Sender(s) to Receiver(s) using a shared conduit - single reference counted channel.
 ## GoDoc
